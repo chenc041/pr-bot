@@ -46,13 +46,21 @@ describe('loadContext', () => {
 });
 
 describe('generateContextPrompt', () => {
-  it('includes project tree and key files', () => {
-    const prompt = generateContextPrompt('src/\n  index.ts', {
-      'package.json': '{"name": "test"}',
-    });
+  it('includes project tree, key files, commit history, and source files', () => {
+    const prompt = generateContextPrompt(
+      'src/\n  index.ts',
+      { 'package.json': '{"name": "test"}' },
+      '- abc1234 (2026-05-01) Alice: initial commit',
+      { 'src/index.ts': 'console.log("hello");' }
+    );
     expect(prompt).toContain('src/');
     expect(prompt).toContain('package.json');
     expect(prompt).toContain('{"name": "test"}');
+    expect(prompt).toContain('abc1234');
+    expect(prompt).toContain('Alice');
+    expect(prompt).toContain('console.log');
     expect(prompt).toContain('Project Overview');
+    expect(prompt).toContain('Commit History');
+    expect(prompt).toContain('Frequently Changed Source Files');
   });
 });
