@@ -15,7 +15,7 @@ const DEFAULTS: BotConfig = {
     model: 'claude-sonnet-4-6',
   },
   context: {
-    file: 'CLAUDE.md',
+    file: 'CONTEXT.md',
   },
 };
 

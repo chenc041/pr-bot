@@ -3,7 +3,7 @@ import path from 'path';
 import { BotConfig } from './types';
 
 export function loadContext(repoPath: string, config: BotConfig): ContextResult {
-  const contextFile = config.context?.file ?? 'CLAUDE.md';
+  const contextFile = config.context?.file ?? 'CONTEXT.md';
   const contextPath = path.join(repoPath, contextFile);
 
   if (fs.existsSync(contextPath)) {
@@ -40,7 +40,7 @@ ${fileContents}
 
 ## Task
 
-Generate a project context file (CLAUDE.md style) with these sections:
+Generate a CONTEXT.md file with these sections:
 1. **Project Overview**: What this project does, tech stack, architecture
 2. **Directory Structure**: Key directories and their purposes
 3. **Conventions**: Coding style, naming conventions, patterns used
