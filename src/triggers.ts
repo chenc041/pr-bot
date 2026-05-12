@@ -1,3 +1,4 @@
+// src/triggers.ts
 import { BotConfig } from './types';
 
 interface Comment {
@@ -24,4 +25,13 @@ export function shouldReview(
   }
 
   return false;
+}
+
+export type TriggerAction = 'review' | 'generate-context';
+
+export function getTriggerAction(comment: { body: string }): TriggerAction {
+  if (/^\/review\s+generate-context\b/.test(comment.body.trim())) {
+    return 'generate-context';
+  }
+  return 'review';
 }
