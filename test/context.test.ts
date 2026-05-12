@@ -11,7 +11,7 @@ describe('loadContext', () => {
     triggers: { pr_open: true, slash_command: true, mention: true },
     bot_name: 'pr-reviewer',
     llm: { provider: 'claude', model: 'claude-sonnet-4-6' },
-    context: { file: 'CLAUDE.md' },
+    context: { file: 'CONTEXT.md' },
   };
 
   beforeEach(() => {
@@ -23,11 +23,11 @@ describe('loadContext', () => {
   });
 
   it('finds existing context file', () => {
-    fs.writeFileSync(path.join(tmpDir, 'CLAUDE.md'), '# My Project\nThis is a test project.');
+    fs.writeFileSync(path.join(tmpDir, 'CONTEXT.md'), '# My Project\nThis is a test project.');
     const result = loadContext(tmpDir, baseConfig);
     expect(result.exists).toBe(true);
     expect(result.content).toContain('My Project');
-    expect(result.filename).toBe('CLAUDE.md');
+    expect(result.filename).toBe('CONTEXT.md');
   });
 
   it('reports missing context file', () => {

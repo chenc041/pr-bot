@@ -14,7 +14,7 @@ const IGNORE_FILES = new Set([
 ]);
 
 const KEY_FILES = [
-  'package.json', 'tsconfig.json', 'README.md', 'CLAUDE.md',
+  'package.json', 'tsconfig.json', 'README.md', 'CONTEXT.md',
   'Gemfile', 'Cargo.toml', 'go.mod', 'pyproject.toml',
   'Makefile', 'Dockerfile', 'docker-compose.yml',
   '.eslintrc.js', '.eslintrc.json', '.prettierrc',

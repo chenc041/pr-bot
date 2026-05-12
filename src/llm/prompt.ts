@@ -4,7 +4,7 @@ import { ReviewInput } from '../types';
 export function buildPrompt(input: ReviewInput): string {
   const sections: string[] = [];
 
-  // 1. Project context (CLAUDE.md or similar)
+  // 1. Project context (CONTEXT.md)
   if (input.context) {
     sections.push(`## Project Context
 
