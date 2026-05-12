@@ -14,6 +14,9 @@ const DEFAULTS: BotConfig = {
     provider: 'claude',
     model: 'claude-sonnet-4-6',
   },
+  context: {
+    file: 'CLAUDE.md',
+  },
 };
 
 export function loadConfig(repoPath: string): BotConfig {
@@ -35,5 +38,6 @@ function mergeConfig(defaults: BotConfig, overrides: Partial<BotConfig>): BotCon
       custom: overrides.llm?.custom ?? defaults.llm.custom,
     },
     limits: overrides.limits ?? defaults.limits,
+    context: overrides.context ? { ...defaults.context, ...overrides.context } : defaults.context,
   };
 }
