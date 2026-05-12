@@ -41,4 +41,26 @@ describe('buildPrompt', () => {
     expect(result).toContain('"comments"');
     expect(result).toContain('"severity"');
   });
+
+  it('includes project context when provided', () => {
+    const result = buildPrompt({
+      diff: '',
+      files: [],
+      pr: { title: 'T', description: '' },
+      config: { provider: 'claude', model: 'x' },
+      context: '# Architecture\nThis is a microservice.',
+    });
+    expect(result).toContain('Project Context');
+    expect(result).toContain('This is a microservice.');
+  });
+
+  it('does not include context section when not provided', () => {
+    const result = buildPrompt({
+      diff: '',
+      files: [],
+      pr: { title: 'T', description: '' },
+      config: { provider: 'claude', model: 'x' },
+    });
+    expect(result).not.toContain('Project Context');
+  });
 });
