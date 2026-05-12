@@ -21,12 +21,21 @@ export interface ContextResult {
   filename: string;
 }
 
-export function generateContextPrompt(tree: string, keyFiles: Record<string, string>): string {
-  const fileContents = Object.entries(keyFiles)
+export function generateContextPrompt(
+  tree: string,
+  keyFiles: Record<string, string>,
+  commitHistory: string,
+  sourceFiles: Record<string, string>
+): string {
+  const keyFileSection = Object.entries(keyFiles)
     .map(([name, content]) => `### ${name}\n\n\`\`\`\n${content}\n\`\`\``)
     .join('\n\n');
 
-  return `You are analyzing a codebase to create a project context file. This file will be used by an AI code reviewer to understand the project when reviewing pull requests.
+  const sourceFileSection = Object.entries(sourceFiles)
+    .map(([name, content]) => `### ${name}\n\n\`\`\`\n${content}\n\`\`\``)
+    .join('\n\n');
+
+  return `You are analyzing a codebase to generate a CONTEXT.md file. This file will be used by an AI code reviewer to understand the project.
 
 ## Project Structure
 
@@ -34,18 +43,34 @@ export function generateContextPrompt(tree: string, keyFiles: Record<string, str
 ${tree}
 \`\`\`
 
-## Key Files
+## Commit History
 
-${fileContents}
+${commitHistory}
+
+## Configuration Files
+
+${keyFileSection || '_(none found)_'}
+
+## Frequently Changed Source Files
+
+${sourceFileSection || '_(none found)_'}
 
 ## Task
 
-Generate a CONTEXT.md file with these sections:
-1. **Project Overview**: What this project does, tech stack, architecture
-2. **Directory Structure**: Key directories and their purposes
-3. **Conventions**: Coding style, naming conventions, patterns used
-4. **Dependencies**: Key external dependencies and how they're used
-5. **Guidelines for Reviewers**: What to look for when reviewing PRs in this project
+Generate a CONTEXT.md file. Use the standard review response format:
+{
+  "summary": "<full CONTEXT.md content in markdown>",
+  "comments": []
+}
 
-Write in markdown format. Keep it concise but thorough. Focus on information that would help an AI code reviewer understand the project and provide better PR reviews.`;
+The summary field should contain a complete markdown document with these sections:
+1. **Project Overview**: Purpose, tech stack, architecture
+2. **Directory Structure**: Key directories and their purposes
+3. **Conventions**: Coding style, naming, patterns, testing approach
+4. **Dependencies**: Key external dependencies
+5. **Key Modules**: Important files/modules and their roles
+6. **Evolution**: How the project grows (based on commit patterns)
+7. **Review Guidelines**: What reviewers should focus on
+
+Keep it concise (300-500 words). Focus on what helps an AI code reviewer.`;
 }
