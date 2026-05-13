@@ -9,7 +9,7 @@ describe('loadContext', () => {
   let tmpDir: string;
   const baseConfig: BotConfig = {
     triggers: { pr_open: true, slash_command: true, mention: true },
-    bot_name: 'pr-reviewer',
+    bot_name: 'patchfox',
     llm: { provider: 'claude', model: 'claude-sonnet-4-6' },
     context: { file: 'CONTEXT.md' },
   };

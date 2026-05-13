@@ -1,4 +1,4 @@
-# PR Review Bot
+# PatchFox
 
 AI-driven code review bot for GitHub Actions. Reviews pull requests and posts line-level annotations via the GitHub Review API.
 
@@ -35,12 +35,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: your-org/pr-review-bot@v1
+      - uses: chenc/patchfox@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
 ```
 
-2. Create `.pr-review-bot.yml` in your repo root:
+2. Create `.patchfox.yml` in your repo root:
 
 ```yaml
 llm:
@@ -52,14 +52,14 @@ llm:
 
 ## Configuration
 
-See `.pr-review-bot.yml`:
+See `.patchfox.yml`:
 
 | Key | Default | Description |
 |-----|---------|-------------|
 | `triggers.pr_open` | `true` | Auto-review on PR open/push |
 | `triggers.slash_command` | `true` | Review on `/review` comment |
 | `triggers.mention` | `true` | Review on `@bot-name` mention |
-| `bot_name` | `pr-reviewer` | Bot username for @mention matching |
+| `bot_name` | `patchfox` | Bot username for @mention matching |
 | `llm.provider` | `claude` | `claude`, `openai`, `deepseek`, `custom` |
 | `llm.model` | `claude-sonnet-4-6` | Model name |
 | `limits.max_files` | `20` | Max files to review per PR |
@@ -73,7 +73,7 @@ Comment on a PR to trigger actions:
 |---------|-------------|
 | `/review` | Trigger a code review of the PR |
 | `/review generate-context` | Analyze the entire project and generate a `CONTEXT.md` file for better reviews |
-| `@pr-reviewer` | Mention the bot to trigger a review (if `triggers.mention` is enabled) |
+| `@patchfox` | Mention the bot to trigger a review (if `triggers.mention` is enabled) |
 
 ### Project Context
 

@@ -8,17 +8,17 @@ export interface CommitInfo {
   files: string[];
 }
 
-export function getCommitHistory(repoPath: string, maxCommits = 50): CommitInfo[] {
+export function getCommitHistory(repoPath: string, maxCommits = 100): CommitInfo[] {
   try {
     const output = execSync(
-      'git log --format="%H||%aI||%an||%s" --name-only',
+      `git log -n ${maxCommits} --format="%H||%aI||%an||%s" --name-only`,
       { cwd: repoPath, encoding: 'utf-8', maxBuffer: 50 * 1024 * 1024 }
     );
 
     const commits: CommitInfo[] = [];
     const entries = output.split('\n\n');
 
-    for (const entry of entries.slice(0, maxCommits)) {
+    for (const entry of entries) {
       const lines = entry.trim().split('\n');
       if (lines.length === 0) continue;
 
