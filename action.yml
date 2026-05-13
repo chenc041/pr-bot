@@ -1,5 +1,5 @@
 # action.yml
-name: 'PatchFox'
+name: 'PatchFox Bot'
 description: 'AI-driven code review for pull requests'
 author: 'chenc'
 
