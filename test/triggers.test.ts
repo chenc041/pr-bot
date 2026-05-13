@@ -4,7 +4,7 @@ import { BotConfig } from '../src/types';
 
 const baseConfig: BotConfig = {
   triggers: { pr_open: true, slash_command: true, mention: true },
-  bot_name: 'pr-reviewer',
+  bot_name: 'patchfox',
   llm: { provider: 'claude', model: 'claude-sonnet-4-6' },
 };
 
@@ -39,7 +39,7 @@ describe('shouldReview', () => {
 
   it('returns true for @mention when mention enabled', () => {
     expect(
-      shouldReview(baseConfig, 'issue_comment', { body: 'hey @pr-reviewer take a look' })
+      shouldReview(baseConfig, 'issue_comment', { body: 'hey @patchfox take a look' })
     ).toBe(true);
   });
 
@@ -49,7 +49,7 @@ describe('shouldReview', () => {
       triggers: { ...baseConfig.triggers, mention: false },
     };
     expect(
-      shouldReview(config, 'issue_comment', { body: 'hey @pr-reviewer take a look' })
+      shouldReview(config, 'issue_comment', { body: 'hey @patchfox take a look' })
     ).toBe(false);
   });
 

@@ -57,7 +57,7 @@ export function readKeyFiles(dir: string): Record<string, string> {
     if (fs.existsSync(filePath)) {
       try {
         const content = fs.readFileSync(filePath, 'utf-8');
-        result[filename] = content.slice(0, 4000); // limit per file
+        result[filename] = content;
       } catch {
         // skip unreadable files
       }

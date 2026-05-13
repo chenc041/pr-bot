@@ -1,5 +1,5 @@
 {
-  "name": "pr-review-bot",
+  "name": "patchfox",
   "version": "1.0.0",
   "description": "AI-driven PR review bot for GitHub Actions",
   "main": "dist/index.js",

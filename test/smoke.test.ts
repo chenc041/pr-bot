@@ -27,7 +27,7 @@ describe('smoke test', () => {
   it('trigger detection works end-to-end', () => {
     expect(shouldReview(config, 'pull_request', { body: '' })).toBe(true);
     expect(shouldReview(config, 'issue_comment', { body: '/review' })).toBe(true);
-    expect(shouldReview(config, 'issue_comment', { body: '@pr-reviewer' })).toBe(true);
+    expect(shouldReview(config, 'issue_comment', { body: '@patchfox' })).toBe(true);
     expect(shouldReview(config, 'issue_comment', { body: 'random' })).toBe(false);
   });
 

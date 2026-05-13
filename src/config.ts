@@ -9,7 +9,7 @@ const DEFAULTS: BotConfig = {
     slash_command: true,
     mention: true,
   },
-  bot_name: 'pr-reviewer',
+  bot_name: 'patchfox',
   llm: {
     provider: 'claude',
     model: 'claude-sonnet-4-6',
@@ -20,7 +20,7 @@ const DEFAULTS: BotConfig = {
 };
 
 export function loadConfig(repoPath: string): BotConfig {
-  const configPath = path.join(repoPath, '.pr-review-bot.yml');
+  const configPath = path.join(repoPath, '.patchfox.yml');
   if (!fs.existsSync(configPath)) {
     return { ...DEFAULTS, llm: { ...DEFAULTS.llm } };
   }

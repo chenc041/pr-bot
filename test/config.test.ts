@@ -20,14 +20,14 @@ describe('loadConfig', () => {
     expect(config.triggers.pr_open).toBe(true);
     expect(config.triggers.slash_command).toBe(true);
     expect(config.triggers.mention).toBe(true);
-    expect(config.bot_name).toBe('pr-reviewer');
+    expect(config.bot_name).toBe('patchfox');
     expect(config.llm.provider).toBe('claude');
     expect(config.llm.model).toBe('claude-sonnet-4-6');
   });
 
   it('loads and merges user config', () => {
     fs.writeFileSync(
-      path.join(tmpDir, '.pr-review-bot.yml'),
+      path.join(tmpDir, '.patchfox.yml'),
       `
 triggers:
   pr_open: false
@@ -45,7 +45,7 @@ llm:
 
   it('loads custom provider config', () => {
     fs.writeFileSync(
-      path.join(tmpDir, '.pr-review-bot.yml'),
+      path.join(tmpDir, '.patchfox.yml'),
       `
 llm:
   provider: custom
