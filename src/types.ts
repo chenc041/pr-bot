@@ -15,6 +15,7 @@ export interface BotConfig {
     pr_open: boolean;
     slash_command: boolean;
     mention: boolean;
+    pr_merged: boolean;
   };
   bot_name: string;
   llm: LLMConfig;

@@ -17,7 +17,7 @@ AI-driven code review bot for GitHub Actions. Reviews pull requests and posts li
 name: PR Review
 on:
   pull_request:
-    types: [opened, synchronize]
+    types: [opened, synchronize, closed]
   issue_comment:
     types: [created]
 
@@ -33,6 +33,9 @@ jobs:
       (github.event_name == 'issue_comment' &&
        github.event.issue.pull_request != null)
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
     steps:
       - uses: actions/checkout@v4
       - uses: chenc/patchfox@v1
@@ -59,6 +62,7 @@ See `.patchfox.yml`:
 | `triggers.pr_open` | `true` | Auto-review on PR open/push |
 | `triggers.slash_command` | `true` | Review on `/review` comment |
 | `triggers.mention` | `true` | Review on `@bot-name` mention |
+| `triggers.pr_merged` | `true` | Update CONTEXT.md when a PR is merged |
 | `bot_name` | `patchfox` | Bot username for @mention matching |
 | `llm.provider` | `claude` | `claude`, `openai`, `deepseek`, `custom` |
 | `llm.model` | `claude-sonnet-4-6` | Model name |
@@ -85,6 +89,24 @@ On first run, if the repository doesn't have a `CONTEXT.md` file, the bot will c
 4. Post the result for you to review and commit
 
 Subsequent reviews will automatically include `CONTEXT.md`, giving the LLM a "memory" of your project's architecture and standards.
+
+### Merge Tracking
+
+When a pull request is merged, PatchFox automatically:
+1. Summarizes the merged PR's changes via the LLM
+2. Appends a "Recent Changes" entry to `CONTEXT.md`
+3. Commits and pushes the updated `CONTEXT.md` to the base branch
+4. Posts a comment on the merged PR with the summary
+
+To enable this, add `closed` to your workflow's `pull_request` types and ensure the `GITHUB_TOKEN` has `contents: write` permission. The `permissions` block in the Setup example above already includes this.
+
+Disable via `.patchfox.yml`:
+```yaml
+triggers:
+  pr_merged: false
+```
+
+If no `CONTEXT.md` exists when a PR merges, the bot will skip the update and suggest creating one.
 
 ## License
 

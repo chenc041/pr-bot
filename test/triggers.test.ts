@@ -1,9 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { shouldReview } from '../src/triggers';
+import { shouldReview, shouldUpdateContext } from '../src/triggers';
 import { BotConfig } from '../src/types';
 
 const baseConfig: BotConfig = {
-  triggers: { pr_open: true, slash_command: true, mention: true },
+  triggers: { pr_open: true, slash_command: true, mention: true, pr_merged: true },
   bot_name: 'patchfox',
   llm: { provider: 'claude', model: 'claude-sonnet-4-6' },
 };
@@ -63,5 +63,43 @@ describe('shouldReview', () => {
     expect(
       shouldReview(baseConfig, 'issue_comment', { body: 'please /review this' })
     ).toBe(false);
+  });
+});
+
+describe('shouldUpdateContext', () => {
+  it('returns true for merged pull_request closed event', () => {
+    expect(shouldUpdateContext(baseConfig, 'pull_request', {
+      action: 'closed',
+      pull_request: { merged: true },
+    })).toBe(true);
+  });
+
+  it('returns false for closed but not merged', () => {
+    expect(shouldUpdateContext(baseConfig, 'pull_request', {
+      action: 'closed',
+      pull_request: { merged: false },
+    })).toBe(false);
+  });
+
+  it('returns false for non-pull_request events', () => {
+    expect(shouldUpdateContext(baseConfig, 'issue_comment', {})).toBe(false);
+  });
+
+  it('returns false when pr_merged trigger is disabled', () => {
+    const config = {
+      ...baseConfig,
+      triggers: { ...baseConfig.triggers, pr_merged: false },
+    };
+    expect(shouldUpdateContext(config, 'pull_request', {
+      action: 'closed',
+      pull_request: { merged: true },
+    })).toBe(false);
+  });
+
+  it('returns false for synchronize event', () => {
+    expect(shouldUpdateContext(baseConfig, 'pull_request', {
+      action: 'synchronize',
+      pull_request: { merged: true },
+    })).toBe(false);
   });
 });

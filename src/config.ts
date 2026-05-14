@@ -8,6 +8,7 @@ const DEFAULTS: BotConfig = {
     pr_open: true,
     slash_command: true,
     mention: true,
+    pr_merged: true,
   },
   bot_name: 'patchfox',
   llm: {

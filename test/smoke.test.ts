@@ -1,7 +1,7 @@
 // test/smoke.test.ts
 import { describe, it, expect } from 'vitest';
 import { loadConfig } from '../src/config';
-import { shouldReview } from '../src/triggers';
+import { shouldReview, shouldUpdateContext } from '../src/triggers';
 import { createProvider } from '../src/llm/provider';
 import { buildPrompt } from '../src/llm/prompt';
 import { parseReviewResponse } from '../src/llm/parse';
@@ -11,6 +11,7 @@ describe('smoke test', () => {
 
   it('config has expected defaults', () => {
     expect(config.triggers.pr_open).toBe(true);
+    expect(config.triggers.pr_merged).toBe(true);
     expect(config.llm.provider).toBe('claude');
   });
 
@@ -46,6 +47,20 @@ describe('smoke test', () => {
     const r = parseReviewResponse('{"summary":"ok","comments":[{"file":"a","line":1,"body":"b","severity":"info"}]}');
     expect(r.summary).toBe('ok');
     expect(r.comments).toHaveLength(1);
+  });
+
+  it('merge trigger detection works end-to-end', () => {
+    expect(shouldUpdateContext(config, 'pull_request', {
+      action: 'closed',
+      pull_request: { merged: true },
+    })).toBe(true);
+    expect(shouldUpdateContext(config, 'pull_request', {
+      action: 'closed',
+      pull_request: { merged: false },
+    })).toBe(false);
+    expect(shouldUpdateContext(config, 'pull_request', {
+      action: 'synchronize',
+    })).toBe(false);
   });
 
   it('parseReviewResponse handles markdown wrapping', () => {

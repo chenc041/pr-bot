@@ -1,16 +1,17 @@
 // src/index.ts
 import { loadConfig } from './config';
-import { shouldReview, getTriggerAction } from './triggers';
+import { shouldReview, shouldUpdateContext, getTriggerAction } from './triggers';
 import { fetchPRContext } from './github/diff';
 import { postReview } from './github/review';
 import { postComment } from './github/comment';
 import { createProvider } from './llm/provider';
-import { loadContext, generateContextPrompt } from './context';
+import { loadContext, generateContextPrompt, generateMergeUpdatePrompt, appendMergeUpdateToContext } from './context';
 import { walkTree, readKeyFiles, readChangedFiles } from './github/files';
 import { getCommitHistory, formatCommitHistory, getMostChangedFiles } from './github/commits';
 import { ReviewComment } from './types';
 import Anthropic from '@anthropic-ai/sdk';
 import OpenAI from 'openai';
+import { execSync } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 
@@ -29,11 +30,6 @@ async function main(): Promise<void> {
 
   const config = loadConfig(repoPath);
 
-  if (!shouldReview(config, eventName, event.comment ?? { body: '' })) {
-    console.log('No trigger matched. Skipping review.');
-    process.exit(0);
-  }
-
   const repo = event.repository?.name;
   const owner = event.repository?.owner?.login;
   const pullNumber =
@@ -45,11 +41,22 @@ async function main(): Promise<void> {
     process.exit(0);
   }
 
-  const action = eventName === 'issue_comment'
-    ? getTriggerAction(event.comment ?? { body: '' })
-    : 'review';
-
   try {
+    // Check for merge event first (before review trigger)
+    if (shouldUpdateContext(config, eventName, event)) {
+      await handleMergeContextUpdate(token, owner, repo, pullNumber, repoPath, config, event);
+      process.exit(0);
+    }
+
+    if (!shouldReview(config, eventName, event.comment ?? { body: '' })) {
+      console.log('No trigger matched. Skipping review.');
+      process.exit(0);
+    }
+
+    const action = eventName === 'issue_comment'
+      ? getTriggerAction(event.comment ?? { body: '' })
+      : 'review';
+
     if (action === 'generate-context') {
       await handleGenerateContext(token, owner, repo, pullNumber, repoPath, config);
       process.exit(0);
@@ -108,6 +115,76 @@ async function handleGenerateContext(
   );
 
   console.log(`Context file written to ${contextFile} with ${commits.length} commits analyzed`);
+}
+
+async function handleMergeContextUpdate(
+  token: string,
+  owner: string,
+  repo: string,
+  pullNumber: number,
+  repoPath: string,
+  config: ReturnType<typeof loadConfig>,
+  event: Record<string, unknown>
+): Promise<void> {
+  console.log(`PR #${pullNumber} merged. Updating project context...`);
+
+  const contextResult = loadContext(repoPath, config);
+  const contextFilename = config.context?.file ?? 'CONTEXT.md';
+
+  if (!contextResult.exists) {
+    console.log(`No ${contextFilename} found. Skipping merge context update.`);
+    await postComment(
+      token, owner, repo, pullNumber,
+      `PR #${pullNumber} was merged. I'd like to update the project context, ` +
+      `but there is currently no \`${contextFilename}\` file. ` +
+      `Use \`/review generate-context\` to create one, and I'll automatically ` +
+      `update it on future merges.`
+    );
+    return;
+  }
+
+  const { diff, files, pr } = await fetchPRContext(token, owner, repo, pullNumber);
+
+  if (!diff.trim()) {
+    console.log('Empty diff on merged PR. Skipping context update.');
+    return;
+  }
+
+  const prompt = generateMergeUpdatePrompt({
+    currentContext: contextResult.content!,
+    prNumber: pullNumber,
+    prTitle: pr.title,
+    prDescription: pr.description,
+    diff,
+    changedFiles: files.map((f) => `${f.filename} (+${f.additions}/-${f.deletions})`),
+  });
+
+  const updateContent = await callLLMRaw(config, prompt);
+
+  const contextPath = path.join(repoPath, contextFilename);
+  const updatedContent = appendMergeUpdateToContext(contextResult.content!, updateContent);
+  fs.writeFileSync(contextPath, updatedContent);
+
+  const baseRef = ((event as any).pull_request?.base?.ref as string) ?? 'main';
+
+  try {
+    execSync(`git config user.name "patchfox[bot]"`, { cwd: repoPath });
+    execSync(`git config user.email "patchfox[bot]@users.noreply.github.com"`, { cwd: repoPath });
+    execSync(`git add "${contextFilename}"`, { cwd: repoPath });
+    execSync(`git commit -m "docs: update ${contextFilename} after PR #${pullNumber}"`, { cwd: repoPath });
+    execSync(`git push origin HEAD:${baseRef}`, { cwd: repoPath });
+  } catch (gitErr) {
+    console.error('Failed to commit/push context update:', gitErr instanceof Error ? gitErr.message : String(gitErr));
+  }
+
+  await postComment(
+    token, owner, repo, pullNumber,
+    `PR #${pullNumber} was merged. I've updated \`${contextFilename}\` to reflect the changes.\n\n` +
+    `**What changed:**\n${updateContent.trim()}\n\n` +
+    `_The \`${contextFilename}\` file on \`${baseRef}\` has been updated with this entry._`
+  );
+
+  console.log(`Context updated for merged PR #${pullNumber}`);
 }
 
 async function callLLMRaw(

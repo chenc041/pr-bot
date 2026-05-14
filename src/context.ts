@@ -74,3 +74,75 @@ The summary field should contain a complete markdown document with these section
 
 Keep it concise (300-500 words). Focus on what helps an AI code reviewer.`;
 }
+
+export function generateMergeUpdatePrompt(params: {
+  currentContext: string;
+  prNumber: number;
+  prTitle: string;
+  prDescription: string;
+  diff: string;
+  changedFiles: string[];
+}): string {
+  const filesList = params.changedFiles.join('\n');
+
+  return `You are maintaining a project context document. A pull request was just merged.
+
+## Current CONTEXT.md
+
+${params.currentContext}
+
+## Merged PR #${params.prNumber}: "${params.prTitle}"
+
+Description: ${params.prDescription}
+
+## Changed Files
+
+${filesList}
+
+## Diff
+
+\`\`\`diff
+${params.diff}
+\`\`\`
+
+## Task
+
+Generate a concise changelog entry for the "Recent Changes" section of CONTEXT.md. This entry should:
+1. Summarize what changed in 3-8 bullet points
+2. Focus on meaningful user-facing changes, architectural decisions, and important refactors
+3. Mention key files that were modified
+
+Return ONLY the markdown content of the entry (the bullet points). Do NOT include a date or heading. The content will be automatically wrapped with a date heading when inserted.
+
+Example output:
+- Refactored authentication middleware to use JWT-based session management
+- Updated user model with new role-based access control fields
+- Added integration tests for login/logout flows`;
+}
+
+function escapeRegex(str: string): string {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+export function appendMergeUpdateToContext(
+  currentContent: string,
+  newEntry: string,
+): string {
+  const today = new Date().toISOString().split('T')[0];
+  const sectionHeader = '## Recent Changes';
+  const entryWithDate = `### ${today}\n\n${newEntry.trim()}`;
+
+  const headerRegex = new RegExp(`^${escapeRegex(sectionHeader)}`, 'm');
+  const match = currentContent.match(headerRegex);
+
+  if (match && match.index !== undefined) {
+    const insertionPoint = match.index + match[0].length;
+    return (
+      currentContent.slice(0, insertionPoint) +
+      `\n\n${entryWithDate}` +
+      currentContent.slice(insertionPoint)
+    );
+  }
+
+  return `${currentContent.trim()}\n\n${sectionHeader}\n\n${entryWithDate}\n`;
+}

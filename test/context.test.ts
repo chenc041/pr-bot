@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { loadContext, generateContextPrompt } from '../src/context';
+import { loadContext, generateContextPrompt, generateMergeUpdatePrompt, appendMergeUpdateToContext } from '../src/context';
 import { BotConfig } from '../src/types';
 import fs from 'fs';
 import path from 'path';
@@ -8,7 +8,7 @@ import os from 'os';
 describe('loadContext', () => {
   let tmpDir: string;
   const baseConfig: BotConfig = {
-    triggers: { pr_open: true, slash_command: true, mention: true },
+    triggers: { pr_open: true, slash_command: true, mention: true, pr_merged: true },
     bot_name: 'patchfox',
     llm: { provider: 'claude', model: 'claude-sonnet-4-6' },
     context: { file: 'CONTEXT.md' },
@@ -62,5 +62,56 @@ describe('generateContextPrompt', () => {
     expect(prompt).toContain('Project Overview');
     expect(prompt).toContain('Commit History');
     expect(prompt).toContain('Frequently Changed Source Files');
+  });
+});
+
+describe('appendMergeUpdateToContext', () => {
+  it('appends Recent Changes section when it does not exist', () => {
+    const result = appendMergeUpdateToContext(
+      '# My Project\n\nThis is a project.',
+      '- Fixed login bug'
+    );
+    expect(result).toContain('# My Project');
+    expect(result).toContain('## Recent Changes');
+    expect(result).toContain('- Fixed login bug');
+  });
+
+  it('inserts new entry at top of existing Recent Changes section', () => {
+    const existing = '# My Project\n\n## Recent Changes\n\n### 2026-05-13\n\n- Old entry';
+    const result = appendMergeUpdateToContext(existing, '- New entry');
+    const newIndex = result.indexOf('New entry');
+    const oldIndex = result.indexOf('Old entry');
+    expect(newIndex).toBeLessThan(oldIndex);
+  });
+
+  it('preserves content before Recent Changes section', () => {
+    const existing = '# Overview\n\nStuff here\n\n## Recent Changes\n\n- old';
+    const result = appendMergeUpdateToContext(existing, '- new');
+    expect(result.startsWith('# Overview')).toBe(true);
+    expect(result).toContain('Stuff here');
+  });
+
+  it('handles empty current content', () => {
+    const result = appendMergeUpdateToContext('', '- first entry');
+    expect(result).toContain('## Recent Changes');
+    expect(result).toContain('- first entry');
+  });
+});
+
+describe('generateMergeUpdatePrompt', () => {
+  it('includes PR title, number, and current context', () => {
+    const prompt = generateMergeUpdatePrompt({
+      currentContext: '# Existing Context',
+      prNumber: 42,
+      prTitle: 'Fix login redirect',
+      prDescription: 'Fixes a bug in the login flow',
+      diff: '--- a/src/login.ts\n+++ b/src/login.ts\n@@ -1,3 +1,4 @@',
+      changedFiles: ['src/login.ts (+5/-2)'],
+    });
+    expect(prompt).toContain('#42');
+    expect(prompt).toContain('Fix login redirect');
+    expect(prompt).toContain('# Existing Context');
+    expect(prompt).toContain('src/login.ts');
+    expect(prompt).toContain('Recent Changes');
   });
 });

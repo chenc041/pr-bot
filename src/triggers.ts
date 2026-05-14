@@ -27,7 +27,18 @@ export function shouldReview(
   return false;
 }
 
-export type TriggerAction = 'review' | 'generate-context';
+export type TriggerAction = 'review' | 'generate-context' | 'merge-update';
+
+export function shouldUpdateContext(
+  config: BotConfig,
+  eventName: string,
+  event: { action?: string; pull_request?: { merged?: boolean } }
+): boolean {
+  if (eventName !== 'pull_request') return false;
+  if (event.action !== 'closed') return false;
+  if (!event.pull_request?.merged) return false;
+  return config.triggers.pr_merged;
+}
 
 export function getTriggerAction(comment: { body: string }): TriggerAction {
   if (/^\/review\s+generate-context\b/.test(comment.body.trim())) {
