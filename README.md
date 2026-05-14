@@ -88,4 +88,4 @@ Subsequent reviews will automatically include `CONTEXT.md`, giving the LLM a "me
 
 ## License
 
-MIT
+Proprietary. All rights reserved. Commercial use requires a paid license.
