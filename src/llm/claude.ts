@@ -15,11 +15,23 @@ export class ClaudeProvider implements Provider {
     const client = new Anthropic({ apiKey });
     const prompt = buildPrompt(input);
 
-    const response = await client.messages.create({
+    const params: Record<string, unknown> = {
       model: input.config.model,
-      max_tokens: 4096,
+      max_tokens: input.config.max_tokens ?? 4096,
       messages: [{ role: 'user', content: prompt }],
-    });
+    };
+
+    if (input.config.temperature !== undefined) {
+      params.temperature = input.config.temperature;
+    }
+
+    if (input.config.thinking) {
+      const budget = typeof input.config.thinking === 'number' ? input.config.thinking : 1600;
+      params.thinking = { type: 'enabled', budget_tokens: budget };
+      delete params.temperature;
+    }
+
+    const response = await client.messages.create(params as any);
 
     const text = (response.content[0] as { type: 'text'; text: string }).text;
     return parseReviewResponse(text);

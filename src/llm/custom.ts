@@ -18,11 +18,17 @@ export class OpenAICompatProvider implements Provider {
     const client = new OpenAI({ apiKey, baseURL: endpoint });
     const prompt = buildPrompt(input);
 
-    const response = await client.chat.completions.create({
+    const params: Record<string, unknown> = {
       model,
       messages: [{ role: 'user', content: prompt }],
-      max_tokens: 4096,
-    });
+      max_tokens: input.config.max_tokens ?? 4096,
+    };
+
+    if (input.config.temperature !== undefined) {
+      params.temperature = input.config.temperature;
+    }
+
+    const response = await client.chat.completions.create(params as any);
 
     const text = response.choices[0]?.message?.content ?? '';
     return parseReviewResponse(text);
