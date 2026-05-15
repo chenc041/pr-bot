@@ -49,6 +49,10 @@ jobs:
 llm:
   provider: claude
   model: claude-sonnet-4-6
+  # Optional: control inference parameters
+  # max_tokens: 8192
+  # temperature: 0.3
+  # thinking: true  # Claude extended thinking
 ```
 
 3. Add your API key to GitHub Secrets.
@@ -66,6 +70,9 @@ See `.patchfox.yml`:
 | `bot_name` | `patchfox` | Bot username for @mention matching |
 | `llm.provider` | `claude` | `claude`, `openai`, `deepseek`, `custom` |
 | `llm.model` | `claude-sonnet-4-6` | Model name |
+| `llm.max_tokens` | `4096` | Max output tokens |
+| `llm.temperature` | — | Sampling temperature (0-2). Not set = SDK default |
+| `llm.thinking` | — | Claude only. `true` → 1600 budget; number → custom budget. Enables extended thinking |
 | `limits.max_files` | `20` | Max files to review per PR |
 | `limits.max_lines_per_file` | `500` | Max lines per file diff |
 

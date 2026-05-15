@@ -29,6 +29,9 @@ export interface BotConfig {
 export interface LLMConfig {
   provider: 'claude' | 'openai' | 'deepseek' | 'custom';
   model: string;
+  max_tokens?: number;
+  temperature?: number;
+  thinking?: boolean | number;
   custom?: {
     endpoint: string;
     model: string;

@@ -195,11 +195,24 @@ async function callLLMRaw(
     const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey) throw new Error('ANTHROPIC_API_KEY is not set');
     const client = new Anthropic({ apiKey });
-    const response = await client.messages.create({
+
+    const params: Record<string, unknown> = {
       model: config.llm.model,
-      max_tokens: 4096,
+      max_tokens: config.llm.max_tokens ?? 4096,
       messages: [{ role: 'user', content: prompt }],
-    });
+    };
+
+    if (config.llm.temperature !== undefined) {
+      params.temperature = config.llm.temperature;
+    }
+
+    if (config.llm.thinking) {
+      const budget = typeof config.llm.thinking === 'number' ? config.llm.thinking : 1600;
+      params.thinking = { type: 'enabled', budget_tokens: budget };
+      delete params.temperature;
+    }
+
+    const response = await client.messages.create(params as any);
     return (response.content[0] as { type: 'text'; text: string }).text;
   }
 
@@ -207,11 +220,15 @@ async function callLLMRaw(
     const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) throw new Error('OPENAI_API_KEY is not set');
     const client = new OpenAI({ apiKey });
-    const response = await client.chat.completions.create({
+    const params: Record<string, unknown> = {
       model: config.llm.model,
       messages: [{ role: 'user', content: prompt }],
-      max_tokens: 4096,
-    });
+      max_tokens: config.llm.max_tokens ?? 4096,
+    };
+    if (config.llm.temperature !== undefined) {
+      params.temperature = config.llm.temperature;
+    }
+    const response = await client.chat.completions.create(params as any);
     return response.choices[0]?.message?.content ?? '';
   }
 
@@ -228,11 +245,15 @@ async function callLLMRaw(
     config.llm.provider === 'custom' ? (config.llm.custom?.model ?? config.llm.model) : config.llm.model;
 
   const client = new OpenAI({ apiKey, baseURL });
-  const response = await client.chat.completions.create({
+  const params: Record<string, unknown> = {
     model,
     messages: [{ role: 'user', content: prompt }],
-    max_tokens: 4096,
-  });
+    max_tokens: config.llm.max_tokens ?? 4096,
+  };
+  if (config.llm.temperature !== undefined) {
+    params.temperature = config.llm.temperature;
+  }
+  const response = await client.chat.completions.create(params as any);
   return response.choices[0]?.message?.content ?? '';
 }
 
